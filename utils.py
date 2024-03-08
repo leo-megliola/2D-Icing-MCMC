@@ -53,10 +53,20 @@ def spins(steps=STEPS, random=True, temp=T, size=N, J=J, KB=KB):
     - KB (float): The Boltzmann constant (default: KB).
     """
   
+    #the mask will be used to precompute the neghbors of each point in the lattice 
+    mask = np.zeros((N,N,N,N), dtype=np.byte) # create a NxN mask for each coordinate pair (i,j) i<N, j<N
+    for i in range(N):  #populate the mask with the neghbors at each position
+        for j in range(N):
+            mask[i,j,i-1,j] = 1 # underflow is automatic because numpy understands [-1] to be the far end of row or col
+            mask[i,j,i,j-1] = 1
+            mask[i,j,i+1 if i<N-1 else 0,j] = 1 # account for overflow
+            mask[i,j,i,j+1 if j<N-1 else 0] = 1
+    #the over/underflow condations may be reffered to as boundary conditions 
+
     if random:
         lattice_spins = random_spins(size)
     else:
-        lattice_spins = np.ones((size, size))
+        lattice_spins = np.ones((size,size), dtype=np.byte)
 
     num_accept = 0
     m_values = []
@@ -64,19 +74,15 @@ def spins(steps=STEPS, random=True, temp=T, size=N, J=J, KB=KB):
         i, j = np.random.randint(size), np.random.randint(size)
         # we only need to consider the neighbors of
         # (i, j) to calculate the change in energy
-        delta_energy = 0
-        for k, l in [(-1, 0), (1, 0), (0, 1), (0, -1)]:
-            i_neigh = i + k if i + k < size else 0
-            j_neigh = j + l if j + l < size else 0
-            delta_energy += -J * -2 * lattice_spins[i, j] * lattice_spins[i_neigh, j_neigh]
+        delta_energy = np.sum(-J * -2 * lattice_spins[i, j] * mask[i, j]) # removed inner loop
         if delta_energy <= 0:
             lattice_spins[i, j] *= -1
             num_accept += 1
         elif delta_energy > 0:
             prob = np.exp(-delta_energy / (KB * temp))
-            if np.random.random() < prob:
-                lattice_spins[i, j] *= -1
-                num_accept += 1
+        if np.random.random() < prob:
+            lattice_spins[i, j] *= -1
+            num_accept += 1
         m_values.append(np.mean(lattice_spins))
     return m_values, lattice_spins, steps
 
