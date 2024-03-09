@@ -144,3 +144,8 @@ def plot_m(m_values, burn_in=BURNIN, temp=T, savefig = None):
 
     print(f"magnetization mean = {m_mean}")
     print(f"magnetization std = {m_std}")
+
+def stats(temp=T, steps=STEPS, burn_in=BURNIN, size=N):
+
+    m_values, _, __ = spins(steps, random=False, temp=T, size=N)
+    return np.mean(m_values[burn_in:]), np.std(m_values[burn_in:])
