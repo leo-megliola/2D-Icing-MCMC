@@ -158,5 +158,5 @@ def stats(temp=T, steps=STEPS, burn_in=BURNIN, size=N):
     Returns:
     numpy.ndarray
     """
-   m_values, _, __ = spins(steps=n, random=False, temp=T, size=N)
-   return np.mean(m_values[burn_in:]), np.std(m_values[burn_in:])
+    m_values, _, __ = spins(steps=n, random=False, temp=T, size=N)
+    return np.mean(m_values[burn_in:]), np.std(m_values[burn_in:])
