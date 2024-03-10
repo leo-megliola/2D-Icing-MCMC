@@ -5,4 +5,4 @@ J: 1
 KB: 1
 T: 2
 BURNIN: 100_000
-T_C: 2/(np.log(1+np.sqrt(2)))
+T_C: 2.269
