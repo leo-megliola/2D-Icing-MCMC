@@ -58,7 +58,8 @@ def spins(steps = STEPS, random = True, temp = T, size=N, J=J, KB=KB, B=B, displ
             i_neigh = i + k if i + k < N else 0
             j_neigh = j + l if j + l < N else 0
             #delta_energy = np.sum(-J * -2 * lattice_spins[i, j] * mask[i, j]) - B * lattice_spins[i, j] <-- Dima implementation in old code pattern 
-            delta_energy += -J * lattice_spins[i, j] * lattice_spins[i_neigh, j_neigh] - B * lattice_spins[i_neigh, j_neigh] #'-2' REMOVED
+            delta_energy += -J * -2 * lattice_spins[i, j] * lattice_spins[i_neigh, j_neigh] #'-2' UNREMOVED
+        delta_energy += - B * lattice_spins[i, j] #moved outside of the for loop; only acts once on the lattice point in question (i,j)
         if delta_energy <= 0:
             total -= lattice_spins[i, j]
             lattice_spins[i, j] *= -1
