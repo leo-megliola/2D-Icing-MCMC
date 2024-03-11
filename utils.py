@@ -40,38 +40,39 @@ def random_spins(n):
     spins = np.random.randint(2, size=(n, n))  # random 0 or 1
     return np.where(spins, 1, -1)  # the zeroes will evaluate to false and become -1
 
-def spins(steps=STEPS, random=True, temp=T, size=N, J=J, KB=KB, B=B, display=True):
 
-    #the mask will be used to precompute the neghbors of each point in the lattice 
-    mask = np.zeros((N,N,N,N), dtype=np.byte) # create a NxN mask for each coordinate pair (i,j) i<N, j<N
-    for i in range(N):  #populate the mask with the neghbors at each position
-        for j in range(N):
-            mask[i,j,i-1,j] = 1 # underflow is automatic because numpy understands [-1] to be the far end of row or col
-            mask[i,j,i,j-1] = 1
-            mask[i,j,i+1 if i<N-1 else 0,j] = 1 # account for overflow
-            mask[i,j,i,j+1 if j<N-1 else 0] = 1
-    #the over/underflow condations may be reffered to as boundary conditions 
-
+def spins(steps = STEPS, random = True, temp = T, size=N, J=J, KB=KB, B=B, display=True):
     if random:
         lattice_spins = random_spins(size)
     else:
-        lattice_spins = np.ones((size,size), dtype=np.byte)
+        lattice_spins = np.ones((size,size))
+
+    total = np.sum(lattice_spins)
+    m_values = np.zeros((steps))
 
     num_accept = 0
-    m_values = []
-    for t in tqdm(range(steps), disable=not display):
+    for t in tqdm(range(steps)):
         i, j = np.random.randint(size), np.random.randint(size)
-        delta_energy = np.sum(-J * -2 * lattice_spins[i, j] * mask[i, j]) - B * lattice_spins[i, j] #? should I remove -2
+        delta_energy = 0
+        for k, l in [(-1, 0), (1, 0), (0, 1), (0, -1)]:
+            i_neigh = i + k if i + k < N else 0
+            j_neigh = j + l if j + l < N else 0
+            #delta_energy = np.sum(-J * -2 * lattice_spins[i, j] * mask[i, j]) - B * lattice_spins[i, j] <-- Dima implementation in old code pattern 
+            delta_energy += -J * lattice_spins[i, j] * lattice_spins[i_neigh, j_neigh] - B * lattice_spins[i_neigh, j_neigh] #'-2' REMOVED
         if delta_energy <= 0:
+            total -= lattice_spins[i, j]
             lattice_spins[i, j] *= -1
+            total += lattice_spins[i, j]
             num_accept += 1
-        elif delta_energy > 0:
+        else:
             prob = np.exp(-delta_energy / (KB * temp))
             if np.random.random() < prob:
+                total -= lattice_spins[i, j]
                 lattice_spins[i, j] *= -1
+                total += lattice_spins[i, j]
                 num_accept += 1
-        m_values.append(np.mean(lattice_spins))
-    return m_values, lattice_spins, steps
+        m_values[t] = total
+    return m_values/(size*size), lattice_spins, steps
 
 
 def plot_lattice(lattice_spins, N=N, savefig = None):
