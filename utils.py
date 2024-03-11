@@ -45,13 +45,14 @@ def spins(steps = STEPS, random = True, temp = T, size=N, J=J, KB=KB, B=B, displ
     if random:
         lattice_spins = random_spins(size)
     else:
+        # print("shape", size)
         lattice_spins = np.ones((size,size))
 
     total = np.sum(lattice_spins)
     m_values = np.zeros((steps))
 
     num_accept = 0
-    for t in tqdm(range(steps)):
+    for t in tqdm(range(steps), disable=not display):
         i, j = np.random.randint(size), np.random.randint(size)
         delta_energy = 0
         for k, l in [(-1, 0), (1, 0), (0, 1), (0, -1)]:
@@ -138,5 +139,5 @@ def plot_m(m_values, burn_in=BURNIN, temp=T, savefig = None):
 
 def stats(temp=T, steps=STEPS, burn_in=BURNIN, size=N, B=B, display=True):
 
-    m_values, _, __ = spins(steps, random=False, temp=temp, size=size, B=B)
+    m_values, _, __ = spins(steps, random=False, temp=temp, size=size, B=B, display=display)
     return np.mean(m_values[burn_in:]), np.std(m_values[burn_in:])
