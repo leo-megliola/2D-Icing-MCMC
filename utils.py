@@ -41,12 +41,30 @@ def random_spins(n):
     return np.where(spins, 1, -1)  # the zeroes will evaluate to false and become -1
 
 
-def spins(steps = STEPS, random = True, temp = T, size=N, J=J, KB=KB, B=B, display=True):
+def spins(steps=STEPS, random=True, temp=T, size=N, J=J, KB=KB, B=B, display=True):
+    """
+    Simulates the 2D Ising model using the Metropolis Monte Carlo algorithm.
+
+    Parameters:
+    - steps (int): Number of Monte Carlo steps to perform (default: STEPS).
+    - random (bool): If True, initialize the lattice with random spins. If False, initialize with all spins up (default: True).
+    - temp (float): Temperature of the system (default: T).
+    - size (int): Size of the lattice (default: N).
+    - J (float): Coupling constant (default: J).
+    - KB (float): Boltzmann constant (default: KB).
+    - B (float): External magnetic field (default: B).
+    - display (bool): If True, display a progress bar during simulation (default: True).
+
+    Returns:
+    - m_values (ndarray): Array of magnetization values at each step.
+    - lattice_spins (ndarray): Final configuration of spins on the lattice.
+    - steps (int): Number of Monte Carlo steps performed.
+    """
+    
     if random:
         lattice_spins = random_spins(size)
     else:
-        # print("shape", size)
-        lattice_spins = np.ones((size,size))
+        lattice_spins = np.ones((size, size))
 
     total = np.sum(lattice_spins)
     m_values = np.zeros((steps))
@@ -58,9 +76,8 @@ def spins(steps = STEPS, random = True, temp = T, size=N, J=J, KB=KB, B=B, displ
         for k, l in [(-1, 0), (1, 0), (0, 1), (0, -1)]:
             i_neigh = i + k if i + k < N else 0
             j_neigh = j + l if j + l < N else 0
-            #delta_energy = np.sum(-J * -2 * lattice_spins[i, j] * mask[i, j]) - B * lattice_spins[i, j] <-- Dima implementation in old code pattern 
-            delta_energy += -J * -2 * lattice_spins[i, j] * lattice_spins[i_neigh, j_neigh] #'-2' UNREMOVED
-        delta_energy += - B * lattice_spins[i, j] #moved outside of the for loop; only acts once on the lattice point in question (i,j)
+            delta_energy += -J * -2 * lattice_spins[i, j] * lattice_spins[i_neigh, j_neigh]
+        delta_energy += -B * lattice_spins[i, j]
         if delta_energy <= 0:
             total -= lattice_spins[i, j]
             lattice_spins[i, j] *= -1
@@ -74,7 +91,8 @@ def spins(steps = STEPS, random = True, temp = T, size=N, J=J, KB=KB, B=B, displ
                 total += lattice_spins[i, j]
                 num_accept += 1
         m_values[t] = total
-    return m_values/(size*size), lattice_spins, steps
+    return m_values / (size * size), lattice_spins, steps
+
 
 
 def plot_lattice(lattice_spins, N=N, savefig = None):
