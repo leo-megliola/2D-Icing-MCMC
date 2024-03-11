@@ -40,16 +40,16 @@ def random_spins(n):
     spins = np.random.randint(2, size=(n, n))  # random 0 or 1
     return np.where(spins, 1, -1)  # the zeroes will evaluate to false and become -1
 
-def spins(steps=STEPS, random=True, temp=T, size=N, J=J, KB=KB, B=B, display=True):
+def spins(steps=STEPS, random=True, temp=T, size=N, J=J, KB=KB, mag=B, display=True):
 
     #the mask will be used to precompute the neghbors of each point in the lattice 
-    mask = np.zeros((N,N,N,N), dtype=np.byte) # create a NxN mask for each coordinate pair (i,j) i<N, j<N
-    for i in range(N):  #populate the mask with the neghbors at each position
-        for j in range(N):
+    mask = np.zeros((size,size,size,size), dtype=np.byte) # create a NxN mask for each coordinate pair (i,j) i<N, j<N
+    for i in range(size):  #populate the mask with the neghbors at each position
+        for j in range(size):
             mask[i,j,i-1,j] = 1 # underflow is automatic because numpy understands [-1] to be the far end of row or col
             mask[i,j,i,j-1] = 1
-            mask[i,j,i+1 if i<N-1 else 0,j] = 1 # account for overflow
-            mask[i,j,i,j+1 if j<N-1 else 0] = 1
+            mask[i,j,i+1 if i<size-1 else 0,j] = 1 # account for overflow
+            mask[i,j,i,j+1 if j<size-1 else 0] = 1
     #the over/underflow condations may be reffered to as boundary conditions 
 
     if random:
@@ -61,7 +61,8 @@ def spins(steps=STEPS, random=True, temp=T, size=N, J=J, KB=KB, B=B, display=Tru
     m_values = []
     for t in tqdm(range(steps), disable=not display):
         i, j = np.random.randint(size), np.random.randint(size)
-        delta_energy = np.sum(-J * -2 * lattice_spins[i, j] * mask[i, j]) - B * lattice_spins[i, j] #? should I remove -2
+        delta_energy = np.sum(-J * -2 * lattice_spins[i, j] * mask[i, j])
+        # delta_energy = np.sum(-J * -2 * lattice_spins[i, j] * mask[i, j]) - mag * lattice_spins[i, j] #? should I remove -2
         if delta_energy <= 0:
             lattice_spins[i, j] *= -1
             num_accept += 1
@@ -134,7 +135,7 @@ def plot_m(m_values, burn_in=BURNIN, temp=T, savefig = None):
     print(f"magnetization mean = {m_mean}")
     print(f"magnetization std = {m_std}")
 
-def stats(temp=T, steps=STEPS, burn_in=BURNIN, size=N, B=B, display=True):
+def stats(temp=T, steps=STEPS, burn_in=BURNIN, size=N, mag=B, display=True):
 
-    m_values, _, __ = spins(steps, random=False, temp=temp, size=size, B=B)
+    m_values, _, __ = spins(steps, random=False, temp=temp, size=size, mag=mag, display=display)
     return np.mean(m_values[burn_in:]), np.std(m_values[burn_in:])
