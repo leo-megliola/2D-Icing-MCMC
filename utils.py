@@ -2,7 +2,7 @@ import numpy as np
 from tqdm.notebook import tqdm
 import matplotlib.pyplot as plt
 import os
-
+import spins_module
 
 # utils.py
 import yaml
@@ -37,11 +37,31 @@ def random_spins(n):
     numpy.ndarray: A 2D array representing the random spin configuration, where 1 represents spin up and -1 represents spin down.
     """
 
-    spins = np.random.randint(2, size=(n, n))  # random 0 or 1
-    return np.where(spins, 1, -1)  # the zeroes will evaluate to false and become -1
+    spins = np.random.randint(2, size=(n, n), dtype=np.int32)  # random 0 or 1
+    return np.where(spins, 1, -1).astype(np.int32)  # the zeroes will evaluate to false and become -1
+
+def spin_test():
+    N = 1_000_000
+    lattice = np.ones((100,100), dtype=np.int32)
+    #lattice = random_spins(100)
+    m = np.zeros((N), dtype=np.float64)
+    spins_module.spins(lattice, m, N, 0.0, 2.0, 1, 1)
+    return m
 
 
 def spins(steps = STEPS, random = True, temp = T, size=N, J=J, KB=KB, B=B, display=True):
+    
+    if random:
+        lattice_spins = random_spins(size)
+    else:
+        lattice_spins = np.ones((size,size), dtype=np.int32)
+    m_values = np.zeros((steps), np.float64)              #init in py, then pass to cpp
+    
+    spins_module.spins(lattice_spins, m_values, steps, B, temp, J, KB) #call cpp to preform MCMC
+    plt.plot(m_values)
+    return m_values, lattice_spins, steps
+
+def spins_py(steps = STEPS, random = True, temp = T, size=N, J=J, KB=KB, B=B, display=True):
     if random:
         lattice_spins = random_spins(size)
     else:
